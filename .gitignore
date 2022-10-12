@@ -22,3 +22,4 @@
 
 # Vs Code
 .vscode/*
+!.vscode/launch.json
