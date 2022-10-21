@@ -2,11 +2,6 @@
 
 enum 
 {
-    W_Width = 800,
-    W_Height = 800
-};
-
-enum
-{
+    W_Side = 800,
     G_Resolution_Side = 32
 };
