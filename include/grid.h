@@ -40,15 +40,17 @@ private:
 
     void UpdateCellDataStorage(const Cell *cell, float *data_storage);
     void UpdateCellVbo(unsigned int &VBO, float *data, std::size_t data_size);
+    void RemoveStartCell();
+    void RemoveDestinationCell();
 
 public:
     Grid();
     void InitializeMainCells();
     const std::vector<float>& HorizontalGrid() const;
     const std::vector<float>& VerticalGrid() const;
-    const Cell& FindCellAround(double position_x, double position_y);
+    Cell* FindCellAround(double position_x, double position_y);
     void SetStartCell(Cell *cell);
     void SetDestinationCell(Cell *cell);
-    void DrawStart();
-    void DrawDestination();
+    void DrawStart() const;
+    void DrawDestination() const;
 };

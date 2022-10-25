@@ -32,12 +32,12 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
         glfwGetCursorPos(window, &cursor_x, &cursor_y);
         cursor_y = W_Side - cursor_y;
     
-        Cell cell = grid.FindCellAround(cursor_x, cursor_y);
+        Cell *cell = grid.FindCellAround(cursor_x, cursor_y);
 
         if (is_setting_start)
-            grid.SetStartCell(&cell);
+            grid.SetStartCell(cell);
         else
-            grid.SetDestinationCell(&cell);
+            grid.SetDestinationCell(cell);
     }
 }
 

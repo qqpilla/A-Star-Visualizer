@@ -95,6 +95,22 @@ void Grid::UpdateCellVbo(unsigned int &VBO, float *data, std::size_t data_size)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+void Grid::RemoveStartCell()
+{
+    start = nullptr;
+    for (int i = 0; i < sizeof(start_data) / sizeof(float); i++)
+        start_data[i] = NULL;
+    UpdateCellVbo(start_vbo, start_data, sizeof(start_data));
+}
+
+void Grid::RemoveDestinationCell()
+{
+    destination = nullptr;
+    for (int i = 0; i < sizeof(destination_data) / sizeof(float); i++)
+        destination_data[i] = NULL;
+    UpdateCellVbo(destination_vbo, destination_data, sizeof(destination_data));
+}
+
 const std::vector<float>& Grid::HorizontalGrid() const
 {
     return horizontal_grid;
@@ -105,7 +121,7 @@ const std::vector<float>& Grid::VerticalGrid() const
     return horizontal_grid;
 }
 
-const Cell& Grid::FindCellAround(double position_x, double position_y)
+Cell* Grid::FindCellAround(double position_x, double position_y)
 {
     float half_cell_size = cell_size / 2.0f;
     std::vector<Cell>::iterator it;
@@ -114,21 +130,27 @@ const Cell& Grid::FindCellAround(double position_x, double position_y)
         it = std::find_if(cells[i].begin(), cells[i].end(),
                         [position_x, position_y, half_cell_size](const Cell &c) -> bool
                         {
-                            return position_x > c.center.x - half_cell_size &&
-                                   position_x < c.center.x + half_cell_size &&
-                                   position_y > c.center.y - half_cell_size &&
-                                   position_y < c.center.y + half_cell_size;
+                            return position_x >= c.center.x - half_cell_size &&
+                                   position_x <= c.center.x + half_cell_size &&
+                                   position_y >= c.center.y - half_cell_size &&
+                                   position_y <= c.center.y + half_cell_size;
                         });
         
         if (it != cells[i].end())
             break;
     }
 
-    return (*it);
+    return &(*it);
 }
 
 void Grid::SetStartCell(Cell *cell)
 {
+    if (start == cell)
+        return;
+
+    if (destination == cell)
+        RemoveDestinationCell();
+
     start = cell;
     UpdateCellDataStorage(start, start_data);
     UpdateCellVbo(start_vbo, start_data, sizeof(start_data));
@@ -136,19 +158,25 @@ void Grid::SetStartCell(Cell *cell)
 
 void Grid::SetDestinationCell(Cell *cell)
 {
+    if (destination == cell)
+        return;
+
+    if (start == cell)
+        RemoveStartCell();
+
     destination = cell;
     UpdateCellDataStorage(destination, destination_data);
     UpdateCellVbo(destination_vbo, destination_data, sizeof(destination_data));
 }
 
-void Grid::DrawStart()
+void Grid::DrawStart() const
 {
     glBindVertexArray(start_vao);
     glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 1);
     glBindVertexArray(0);
 }
 
-void Grid::DrawDestination()
+void Grid::DrawDestination() const
 {
     glBindVertexArray(destination_vao);
     glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 1);
