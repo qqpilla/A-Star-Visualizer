@@ -8,9 +8,9 @@
 #include "shader_program.h"
 
 Grid grid;
-bool is_setting_start = true;
+bool is_placing_main_cells = true;
 
-void ErrorCallback(int errorCode, const char* message)
+void ErrorCallback(int errorCode, const char *message)
 {
     std::cout << "ERROR: " << message << "\nERROR CODE: " << errorCode << std::endl;
 }
@@ -21,23 +21,29 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 
     if (key = GLFW_KEY_SPACE && action == GLFW_PRESS)
-        is_setting_start = !is_setting_start;
+        is_placing_main_cells = !is_placing_main_cells;
 }
 
 void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    bool left_click = (button == GLFW_MOUSE_BUTTON_LEFT) && (action == GLFW_PRESS);
+    bool right_click = (button == GLFW_MOUSE_BUTTON_RIGHT) && (action == GLFW_PRESS);
+
+    if (left_click || right_click)
     {
         double cursor_x, cursor_y;
         glfwGetCursorPos(window, &cursor_x, &cursor_y);
         cursor_y = W_Side - cursor_y;
-    
+
         Cell *cell = grid.FindCellAround(cursor_x, cursor_y);
 
-        if (is_setting_start)
-            grid.SetStartCell(cell);
-        else
-            grid.SetDestinationCell(cell);
+        if (is_placing_main_cells)
+        {
+            if (left_click)
+                grid.SetStartCell(cell);
+            else
+                grid.SetDestinationCell(cell);
+        }
     }
 }
 
@@ -76,7 +82,6 @@ int main()
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
 
-
     grid.InitializeGrid();
     grid.InitializeMainCells();
 
@@ -84,14 +89,14 @@ int main()
     ShaderProgram horizontal_grid_shader("../shaders/h_grid.vs", "../shaders/grid.fs");
     ShaderProgram main_cells_shader("../shaders/main_cells.vs", "../shaders/main_cells.fs");
 
-    while(!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(main_cells_shader.ID());
         grid.DrawStart();
-        grid.DrawDestination();        
+        grid.DrawDestination();
 
         glUseProgram(vertical_grid_shader.ID());
         grid.DrawSetOfGridLines();
