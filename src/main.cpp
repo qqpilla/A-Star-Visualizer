@@ -41,45 +41,6 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
-unsigned int SetUpGrid()
-{
-    // (0.0f, y) and (1.0f, y) for all horizontal lines and
-    // (x, 0.0f) and (x, 1.0f) for all vertical lines
-    int count = (G_Resolution_Side - 1) * 4 * 2;
-    float coords[count];
-
-    for (int i = 0; i < G_Resolution_Side - 1; i++)
-    {
-        float normalized_horizontal = Normalized(grid.HorizontalGrid()[i]);
-        float normalized_vertical = Normalized(grid.VerticalGrid()[i]);
-
-        coords[8 * i] = -1.0f;
-        coords[8 * i + 1] = normalized_horizontal;
-        coords[8 * i + 2] = 1.0f;
-        coords[8 * i + 3] = normalized_horizontal;
-
-        coords[8 * i + 4] = normalized_vertical;
-        coords[8 * i + 5] = -1.0f;
-        coords[8 * i + 6] = normalized_vertical;
-        coords[8 * i + 7] = 1.0f;
-    }
-
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(coords), coords, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    return VAO;
-}
-
 int main()
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -116,11 +77,11 @@ int main()
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
 
 
+    grid.InitializeGrid();
     grid.InitializeMainCells();
 
-    unsigned int grid_vao = SetUpGrid();
-    ShaderProgram grid_shader("../shaders/grid.vs", "../shaders/grid.fs");
-
+    ShaderProgram vertical_grid_shader("../shaders/v_grid.vs", "../shaders/grid.fs");
+    ShaderProgram horizontal_grid_shader("../shaders/h_grid.vs", "../shaders/grid.fs");
     ShaderProgram main_cells_shader("../shaders/main_cells.vs", "../shaders/main_cells.fs");
 
     while(!glfwWindowShouldClose(window))
@@ -132,9 +93,10 @@ int main()
         grid.DrawStart();
         grid.DrawDestination();        
 
-        glUseProgram(grid_shader.ID());
-        glBindVertexArray(grid_vao);
-        glDrawArrays(GL_LINES, 0, (G_Resolution_Side - 1) * 4);
+        glUseProgram(vertical_grid_shader.ID());
+        grid.DrawSetOfGridLines();
+        glUseProgram(horizontal_grid_shader.ID());
+        grid.DrawSetOfGridLines();
 
         glfwSwapBuffers(window);
         glfwPollEvents();

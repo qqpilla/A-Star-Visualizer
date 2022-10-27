@@ -12,24 +12,55 @@ Grid::Grid()
 {    
     // set up cells
     cells = std::vector<std::vector<Cell>>(G_Resolution_Side, std::vector<Cell>(G_Resolution_Side));
+    float half_cell_size = cell_size / 2.0f;
+
     for (int i = 0; i < G_Resolution_Side; i++)
     {
         for (int j = 0; j < G_Resolution_Side; j++)
         {
-            cells[i][j].center = {cell_size / 2.0f + i * cell_size,
-                                  cell_size / 2.0f + j * cell_size};
+            cells[i][j].center = {half_cell_size + i * cell_size,
+                                  half_cell_size + j * cell_size};
         }
     }
+}
 
-    // set up grid
-    int count = G_Resolution_Side - 1;
-    horizontal_grid = std::vector<float>(count);
-    vertical_grid = std::vector<float>(count);
-    for (int i = 0; i < count; i++)
-    {
-        horizontal_grid[i] = cell_size * (i + 1);
-        vertical_grid[i] = cell_size * (i + 1);
-    }
+void Grid::InitializeGrid()
+{
+    // set of lines - all vertical or all horizontal lines
+    // each vertical line has ends coords (offset, -1) & (offset, 1)
+    // each horizontal line has ends coords (-1, offset) & (1, offset)
+    int vertices_count = (G_Resolution_Side - 1) * 2;
+    int lines_count = G_Resolution_Side - 1;
+    float ends[vertices_count];
+    float offsets[lines_count];
+
+    // -1, 1, -1, 1 ... 
+    for (int i = 0; i < vertices_count; i++)
+        ends[i] = (i % 2) * 2.0f - 1.0f;
+
+    for (int i = 0; i < lines_count; i++)
+        offsets[i] = Normalized(cell_size * (i + 1));
+
+
+    glGenVertexArrays(1, &grid_vao);
+    glBindVertexArray(grid_vao);
+
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ends) + sizeof(offsets), NULL, GL_STATIC_DRAW);
+
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ends), ends);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(ends), sizeof(offsets), offsets);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)(sizeof(ends)));
+    glVertexAttribDivisor(1, 1);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void Grid::InitializeMainCells()
@@ -49,6 +80,7 @@ void Grid::InitializeMainCells()
     glBindBuffer(GL_ARRAY_BUFFER, start_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(start_data) + sizeof(start_color), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(start_data), sizeof(start_color), start_color);
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
@@ -65,6 +97,7 @@ void Grid::InitializeMainCells()
     glBindBuffer(GL_ARRAY_BUFFER, destination_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(destination_data) + sizeof(destination_color), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(destination_data), sizeof(destination_color), destination_color);
+    
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
@@ -109,16 +142,6 @@ void Grid::RemoveDestinationCell()
     for (int i = 0; i < sizeof(destination_data) / sizeof(float); i++)
         destination_data[i] = NULL;
     UpdateCellVbo(destination_vbo, destination_data, sizeof(destination_data));
-}
-
-const std::vector<float>& Grid::HorizontalGrid() const
-{
-    return horizontal_grid;
-}
-
-const std::vector<float>& Grid::VerticalGrid() const
-{
-    return horizontal_grid;
 }
 
 Cell* Grid::FindCellAround(double position_x, double position_y)
@@ -167,6 +190,13 @@ void Grid::SetDestinationCell(Cell *cell)
     destination = cell;
     UpdateCellDataStorage(destination, destination_data);
     UpdateCellVbo(destination_vbo, destination_data, sizeof(destination_data));
+}
+
+void Grid::DrawSetOfGridLines() const
+{
+    glBindVertexArray(grid_vao);
+    glDrawArraysInstanced(GL_LINES, 0, 2, G_Resolution_Side - 1);
+    glBindVertexArray(0);
 }
 
 void Grid::DrawStart() const

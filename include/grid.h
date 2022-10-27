@@ -4,8 +4,6 @@
 #include <cstddef>
 #include "constants.h"
 
-float Normalized(float value);
-
 struct Cell
 {
     struct Point
@@ -21,9 +19,9 @@ class Grid
 {
 private:
     std::vector<std::vector<Cell>> cells;
-    std::vector<float> horizontal_grid;
-    std::vector<float> vertical_grid;
     float cell_size = W_Side / G_Resolution_Side;
+
+    unsigned int grid_vao;
 
     Cell *start = nullptr;
     Cell *destination = nullptr;
@@ -45,12 +43,14 @@ private:
 
 public:
     Grid();
+    void InitializeGrid();
     void InitializeMainCells();
-    const std::vector<float>& HorizontalGrid() const;
-    const std::vector<float>& VerticalGrid() const;
+
     Cell* FindCellAround(double position_x, double position_y);
     void SetStartCell(Cell *cell);
     void SetDestinationCell(Cell *cell);
+
+    void DrawSetOfGridLines() const;
     void DrawStart() const;
     void DrawDestination() const;
 };
