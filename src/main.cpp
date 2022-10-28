@@ -33,16 +33,24 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
     {
         double cursor_x, cursor_y;
         glfwGetCursorPos(window, &cursor_x, &cursor_y);
-        cursor_y = W_Side - cursor_y;
+        cursor_y = double(W_Side) - cursor_y;
 
-        Cell *cell = grid.FindCellAround(cursor_x, cursor_y);
+        int i_ind, j_ind;
+        Cell *cell = grid.FindCellAround(cursor_x, cursor_y, i_ind, j_ind);
 
         if (is_placing_main_cells)
         {
             if (left_click)
-                grid.SetStartCell(cell);
+                grid.SetStartCell(cell, i_ind, j_ind);
             else
-                grid.SetDestinationCell(cell);
+                grid.SetDestinationCell(cell, i_ind, j_ind);
+        }
+        else
+        {
+            if (left_click)
+                grid.PlaceBlockedCell(cell, i_ind, j_ind);
+            else
+                grid.RemoveBlockedCell(cell, i_ind, j_ind);
         }
     }
 }
@@ -82,17 +90,22 @@ int main()
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
 
-    grid.InitializeGrid();
-    grid.InitializeMainCells();
-
     ShaderProgram vertical_grid_shader("../shaders/v_grid.vs", "../shaders/grid.fs");
     ShaderProgram horizontal_grid_shader("../shaders/h_grid.vs", "../shaders/grid.fs");
-    ShaderProgram main_cells_shader("../shaders/main_cells.vs", "../shaders/main_cells.fs");
+    ShaderProgram main_cells_shader("../shaders/main_cells.vs", "../shaders/cells.fs");
+    ShaderProgram blocked_cells_shader("../shaders/blocked_cells.vs", "../shaders/cells.fs");
+
+    grid.InitializeGrid();
+    grid.InitializeMainCells();
+    grid.InitializeBlockedCells();
 
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(blocked_cells_shader.ID());
+        grid.DrawBlockedCells();
 
         glUseProgram(main_cells_shader.ID());
         grid.DrawStart();
