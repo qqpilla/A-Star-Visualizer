@@ -30,14 +30,9 @@ void Grid::InitializeGrid()
     // set of lines - all vertical or all horizontal lines
     // each vertical line has ends coords (offset, -1) & (offset, 1)
     // each horizontal line has ends coords (-1, offset) & (1, offset)
-    int vertices_count = (G_Resolution_Side - 1) * 2;
     int lines_count = G_Resolution_Side - 1;
-    float ends[vertices_count];
     float offsets[lines_count];
-
-    // -1, 1, -1, 1 ... 
-    for (int i = 0; i < vertices_count; i++)
-        ends[i] = (i % 2) * 2.0f - 1.0f;
+    float ends[2] = {-1.0f, 1.0f};
 
     for (int i = 0; i < lines_count; i++)
         offsets[i] = Normalized(cell_size * (i + 1));
