@@ -10,6 +10,11 @@
 Grid grid;
 bool is_placing_main_cells = true;
 
+bool left_click = false;
+bool right_click = false;
+double cursor_x;
+double cursor_y;
+
 void ErrorCallback(int errorCode, const char *message)
 {
     std::cout << "ERROR: " << message << "\nERROR CODE: " << errorCode << std::endl;
@@ -20,21 +25,34 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 
-    if (key = GLFW_KEY_SPACE && action == GLFW_PRESS)
+    if (!(left_click || right_click) && key == GLFW_KEY_SPACE && action == GLFW_PRESS)
         is_placing_main_cells = !is_placing_main_cells;
+}
+
+void CursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos)
+{
+    cursor_x = x_pos;
+    cursor_y = double(W_Side) - y_pos;
+
+    if (!is_placing_main_cells && (left_click || right_click))
+    {
+        int i_ind, j_ind;
+        Cell *cell = grid.FindCellAround(cursor_x, cursor_y, i_ind, j_ind);
+
+        if (left_click)
+            grid.PlaceBlockedCell(cell, i_ind, j_ind);
+        else
+            grid.RemoveBlockedCell(cell, i_ind, j_ind);
+    }
 }
 
 void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
-    bool left_click = (button == GLFW_MOUSE_BUTTON_LEFT) && (action == GLFW_PRESS);
-    bool right_click = (button == GLFW_MOUSE_BUTTON_RIGHT) && (action == GLFW_PRESS);
+    left_click = (button == GLFW_MOUSE_BUTTON_LEFT) && (action == GLFW_PRESS);
+    right_click = (button == GLFW_MOUSE_BUTTON_RIGHT) && (action == GLFW_PRESS);
 
     if (left_click || right_click)
     {
-        double cursor_x, cursor_y;
-        glfwGetCursorPos(window, &cursor_x, &cursor_y);
-        cursor_y = double(W_Side) - cursor_y;
-
         int i_ind, j_ind;
         Cell *cell = grid.FindCellAround(cursor_x, cursor_y, i_ind, j_ind);
 
@@ -88,6 +106,7 @@ int main()
 
     glViewport(0, 0, W_Side, W_Side);
     glfwSetKeyCallback(window, KeyCallback);
+    glfwSetCursorPosCallback(window, CursorPositionCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
 
     ShaderProgram vertical_grid_shader("../shaders/v_grid.vs", "../shaders/grid.fs");
