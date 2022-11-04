@@ -1,0 +1,22 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build project",
+			"type": "shell",
+			"command": "make",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Run",
+			"type": "shell",
+			"command": ".\\program.exe",
+			"options": {
+				"cwd": "${workspaceFolder}\\build"
+			}
+		}
+	]
+}
