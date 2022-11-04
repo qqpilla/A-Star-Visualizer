@@ -196,7 +196,7 @@ void Grid::UpdateBlockedCellVbo(float *data, std::size_t data_size, int i_ind, i
 void Grid::RemoveStartCell()
 {
     start = nullptr;
-    for (int i = 0; i < sizeof(start_data) / sizeof(float); i++)
+    for (size_t i = 0; i < sizeof(start_data) / sizeof(float); i++)
         start_data[i] = -1.0f;
     UpdateMainCellVbo(start_vbo, start_data, sizeof(start_data));
 }
@@ -204,7 +204,7 @@ void Grid::RemoveStartCell()
 void Grid::RemoveDestinationCell()
 {
     destination = nullptr;
-    for (int i = 0; i < sizeof(destination_data) / sizeof(float); i++)
+    for (size_t i = 0; i < sizeof(destination_data) / sizeof(float); i++)
         destination_data[i] = -1.0f;
     UpdateMainCellVbo(destination_vbo, destination_data, sizeof(destination_data));
 }
