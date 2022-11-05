@@ -139,22 +139,22 @@ void Grid::InitializeBlockedCells()
     unsigned int EBO;
     glGenBuffers(1, &EBO);
 
-    glGenVertexArrays(1, &blocked_vao);
-    glBindVertexArray(blocked_vao);
+    glGenVertexArrays(1, &blocked_cells_vao);
+    glBindVertexArray(blocked_cells_vao);
 
-    glGenBuffers(1, &blocked_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, blocked_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(coords) + sizeof(blocked_color) + sizeof(offsets), NULL, GL_STATIC_DRAW);
+    glGenBuffers(1, &blocked_cells_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, blocked_cells_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(coords) + sizeof(blocked_cells_color) + sizeof(offsets), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(coords), coords);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(coords), sizeof(blocked_color), blocked_color);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(coords) + sizeof(blocked_color), sizeof(offsets), offsets);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(coords), sizeof(blocked_cells_color), blocked_cells_color);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(coords) + sizeof(blocked_cells_color), sizeof(offsets), offsets);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(coords)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)(sizeof(coords) + sizeof(blocked_color)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)(sizeof(coords) + sizeof(blocked_cells_color)));
     glVertexAttribDivisor(1, G_Resolution_Side * G_Resolution_Side);
     glVertexAttribDivisor(2, 1);
 
@@ -182,13 +182,13 @@ void Grid::UpdateMainCellVbo(unsigned int &VBO, float *data, std::size_t data_si
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Grid::UpdateBlockedCellVbo(float *data, std::size_t data_size, int i_ind, int j_ind)
+void Grid::UpdateBlockedCellsVbo(float *data, std::size_t data_size, std::size_t offset)
 {
-    // + 11 comes from the fact that in the blocked_vbo coords (8 floats)
+    // + 11 comes from the fact that in the blocked_cells_vbo coords (8 floats)
     // and color (3 floats) of a single quad go first 
-    std::size_t offset = sizeof(float) * (2 * (i_ind * G_Resolution_Side + j_ind) + 11) ;
+    offset += sizeof(float) * 11;
 
-    glBindBuffer(GL_ARRAY_BUFFER, blocked_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, blocked_cells_vbo);
     glBufferSubData(GL_ARRAY_BUFFER, offset, data_size, data);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
@@ -196,7 +196,7 @@ void Grid::UpdateBlockedCellVbo(float *data, std::size_t data_size, int i_ind, i
 void Grid::RemoveStartCell()
 {
     start = nullptr;
-    for (size_t i = 0; i < sizeof(start_data) / sizeof(float); i++)
+    for (std::size_t i = 0; i < sizeof(start_data) / sizeof(float); i++)
         start_data[i] = -1.0f;
     UpdateMainCellVbo(start_vbo, start_data, sizeof(start_data));
 }
@@ -204,9 +204,22 @@ void Grid::RemoveStartCell()
 void Grid::RemoveDestinationCell()
 {
     destination = nullptr;
-    for (size_t i = 0; i < sizeof(destination_data) / sizeof(float); i++)
+    for (std::size_t i = 0; i < sizeof(destination_data) / sizeof(float); i++)
         destination_data[i] = -1.0f;
     UpdateMainCellVbo(destination_vbo, destination_data, sizeof(destination_data));
+}
+
+void Grid::RemoveAllBlockedCells()
+{
+    for (std::size_t i = 0; i < cells.size(); i++)
+        for (std::size_t j = 0; j < cells[i].size(); j++)
+            if (!cells[i][j].is_free)
+                cells[i][j].is_free = true;
+
+    float offsets[2 * G_Resolution_Side * G_Resolution_Side];
+    std::fill_n(offsets, 2 * G_Resolution_Side * G_Resolution_Side, Normalized(-cell_size / 2.0f));
+
+    UpdateBlockedCellsVbo(offsets, sizeof(offsets), 0);
 }
 
 Cell* Grid::FindCellAround(double position_x, double position_y, int &i_ind, int &j_ind)
@@ -278,7 +291,9 @@ void Grid::PlaceBlockedCell(Cell* cell, int i_ind, int j_ind)
 
     cell->is_free = false;
     float position[2] = {Normalized(cell->center.x), Normalized(cell->center.y)};
-    UpdateBlockedCellVbo(position, sizeof(position), i_ind, j_ind);
+    std::size_t offset = sizeof(float) * 2 * (i_ind * G_Resolution_Side + j_ind);
+
+    UpdateBlockedCellsVbo(position, sizeof(position), offset);
 }
 
 void Grid::RemoveBlockedCell(Cell *cell, int i_ind, int j_ind)
@@ -288,7 +303,16 @@ void Grid::RemoveBlockedCell(Cell *cell, int i_ind, int j_ind)
 
     cell->is_free = true;
     float position[2] = {Normalized(-cell_size / 2.0f), Normalized(-cell_size / 2.0f)};
-    UpdateBlockedCellVbo(position, sizeof(position), i_ind, j_ind);
+    std::size_t offset = sizeof(float) * 2 * (i_ind * G_Resolution_Side + j_ind);
+
+    UpdateBlockedCellsVbo(position, sizeof(position), offset);
+}
+
+void Grid::ClearAll()
+{
+    RemoveStartCell();
+    RemoveDestinationCell();
+    RemoveAllBlockedCells();
 }
 
 void Grid::DrawSetOfGridLines() const
@@ -314,7 +338,7 @@ void Grid::DrawDestination() const
 
 void Grid::DrawBlockedCells() const
 {
-    glBindVertexArray(blocked_vao);
+    glBindVertexArray(blocked_cells_vao);
     glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, G_Resolution_Side * G_Resolution_Side);
     glBindVertexArray(0);
 }

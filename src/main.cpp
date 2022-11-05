@@ -27,6 +27,9 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
     if (!(left_click || right_click) && key == GLFW_KEY_SPACE && action == GLFW_PRESS)
         is_placing_main_cells = !is_placing_main_cells;
+
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+        grid.ClearAll();
 }
 
 void CursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos)

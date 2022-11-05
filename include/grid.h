@@ -36,17 +36,18 @@ private:
     float start_color[3] = {1.0f, 0.0f, 0.0f};
     float destination_color[3] = {0.0f, 0.0f, 1.0f};
 
-    unsigned int blocked_vao;
-    unsigned int blocked_vbo;
+    unsigned int blocked_cells_vao;
+    unsigned int blocked_cells_vbo;
 
-    float blocked_color[3] = {0.0f, 1.0f, 0.0f};
+    float blocked_cells_color[3] = {0.0f, 1.0f, 0.0f};
 
     void UpdateMainCellDataStorage(const Cell *cell, float *data_storage);
     void UpdateMainCellVbo(unsigned int &VBO, float *data, std::size_t data_size);
-    void UpdateBlockedCellVbo(float *data, std::size_t data_size, int i_ind, int j_ind);
+    void UpdateBlockedCellsVbo(float *data, std::size_t data_size, std::size_t offset);
 
     void RemoveStartCell();
     void RemoveDestinationCell();
+    void RemoveAllBlockedCells();
 
 public:
     Grid();
@@ -60,6 +61,7 @@ public:
     void SetDestinationCell(Cell *cell, int i_ind, int j_ind);
     void PlaceBlockedCell(Cell *cell, int i_ind, int j_ind);
     void RemoveBlockedCell(Cell *cell, int i_ind, int j_ind);
+    void ClearAll();
 
     void DrawSetOfGridLines() const;
     void DrawStart() const;
