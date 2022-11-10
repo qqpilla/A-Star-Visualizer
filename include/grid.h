@@ -11,7 +11,9 @@ struct Cell
         float x;
         float y;
     } center;
-    
+
+    int grid_row;
+    int grid_column;    
     bool is_free = true;
 };
 
@@ -55,12 +57,12 @@ public:
     void InitializeMainCells();
     void InitializeBlockedCells();
 
-    Cell* FindCellAround(double position_x, double position_y, int &i_ind, int &j_ind);
+    Cell* FindCellAround(double position_x, double position_y);
     
-    void SetStartCell(Cell *cell, int i_ind, int j_ind);
-    void SetDestinationCell(Cell *cell, int i_ind, int j_ind);
-    void PlaceBlockedCell(Cell *cell, int i_ind, int j_ind);
-    void RemoveBlockedCell(Cell *cell, int i_ind, int j_ind);
+    void SetStartCell(Cell *cell);
+    void SetDestinationCell(Cell *cell);
+    void PlaceBlockedCell(Cell *cell);
+    void RemoveBlockedCell(Cell *cell);
     void ClearAll();
 
     void DrawSetOfGridLines() const;

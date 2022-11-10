@@ -6,8 +6,10 @@
 #include "constants.h"
 #include "grid.h"
 #include "shader_program.h"
+#include "searcher.h"
 
 Grid grid;
+
 bool is_placing_main_cells = true;
 
 bool left_click = false;
@@ -39,13 +41,12 @@ void CursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos)
 
     if (!is_placing_main_cells && (left_click || right_click))
     {
-        int i_ind, j_ind;
-        Cell *cell = grid.FindCellAround(cursor_x, cursor_y, i_ind, j_ind);
+        Cell *cell = grid.FindCellAround(cursor_x, cursor_y);
 
         if (left_click)
-            grid.PlaceBlockedCell(cell, i_ind, j_ind);
+            grid.PlaceBlockedCell(cell);
         else
-            grid.RemoveBlockedCell(cell, i_ind, j_ind);
+            grid.RemoveBlockedCell(cell);
     }
 }
 
@@ -56,22 +57,21 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 
     if (left_click || right_click)
     {
-        int i_ind, j_ind;
-        Cell *cell = grid.FindCellAround(cursor_x, cursor_y, i_ind, j_ind);
+        Cell *cell = grid.FindCellAround(cursor_x, cursor_y);
 
         if (is_placing_main_cells)
         {
             if (left_click)
-                grid.SetStartCell(cell, i_ind, j_ind);
+                grid.SetStartCell(cell);
             else
-                grid.SetDestinationCell(cell, i_ind, j_ind);
+                grid.SetDestinationCell(cell);
         }
         else
         {
             if (left_click)
-                grid.PlaceBlockedCell(cell, i_ind, j_ind);
+                grid.PlaceBlockedCell(cell);
             else
-                grid.RemoveBlockedCell(cell, i_ind, j_ind);
+                grid.RemoveBlockedCell(cell);
         }
     }
 }

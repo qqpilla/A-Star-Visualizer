@@ -21,6 +21,8 @@ Grid::Grid()
         {
             cells[i][j].center = {half_cell_size + i * cell_size,
                                   half_cell_size + j * cell_size};
+            cells[i][j].grid_row = i;
+            cells[i][j].grid_column = j;
         }
     }
 }
@@ -222,7 +224,7 @@ void Grid::RemoveAllBlockedCells()
     UpdateBlockedCellsVbo(offsets, sizeof(offsets), 0);
 }
 
-Cell* Grid::FindCellAround(double position_x, double position_y, int &i_ind, int &j_ind)
+Cell* Grid::FindCellAround(double position_x, double position_y)
 {
     float half_cell_size = cell_size / 2.0f;
 
@@ -239,23 +241,19 @@ Cell* Grid::FindCellAround(double position_x, double position_y, int &i_ind, int
                         });
         
         if (it != cells[i].end())
-        {
-            i_ind = i;
-            j_ind = it - cells[i].begin();
             break;
-        }
     }
 
     return &(*it);
 }
 
-void Grid::SetStartCell(Cell *cell, int i_ind, int j_ind)
+void Grid::SetStartCell(Cell *cell)
 {
     if (start == cell)
         return;
 
     if (!cell->is_free)
-        RemoveBlockedCell(cell, i_ind, j_ind);
+        RemoveBlockedCell(cell);
     else if (destination == cell)
         RemoveDestinationCell();
 
@@ -264,13 +262,13 @@ void Grid::SetStartCell(Cell *cell, int i_ind, int j_ind)
     UpdateMainCellVbo(start_vbo, start_data, sizeof(start_data));
 }
 
-void Grid::SetDestinationCell(Cell *cell, int i_ind, int j_ind)
+void Grid::SetDestinationCell(Cell *cell)
 {
     if (destination == cell)
         return;
 
     if (!cell->is_free)
-        RemoveBlockedCell(cell, i_ind, j_ind);
+        RemoveBlockedCell(cell);
     else if (start == cell)
         RemoveStartCell();
 
@@ -279,7 +277,7 @@ void Grid::SetDestinationCell(Cell *cell, int i_ind, int j_ind)
     UpdateMainCellVbo(destination_vbo, destination_data, sizeof(destination_data));
 }
 
-void Grid::PlaceBlockedCell(Cell* cell, int i_ind, int j_ind)
+void Grid::PlaceBlockedCell(Cell* cell)
 {
     if (!cell->is_free)
         return;
@@ -291,19 +289,19 @@ void Grid::PlaceBlockedCell(Cell* cell, int i_ind, int j_ind)
 
     cell->is_free = false;
     float position[2] = {Normalized(cell->center.x), Normalized(cell->center.y)};
-    std::size_t offset = sizeof(float) * 2 * (i_ind * G_Resolution_Side + j_ind);
+    std::size_t offset = sizeof(float) * 2 * (cell->grid_row * G_Resolution_Side + cell->grid_column);
 
     UpdateBlockedCellsVbo(position, sizeof(position), offset);
 }
 
-void Grid::RemoveBlockedCell(Cell *cell, int i_ind, int j_ind)
+void Grid::RemoveBlockedCell(Cell *cell)
 {
     if (cell->is_free)
         return;
 
     cell->is_free = true;
     float position[2] = {Normalized(-cell_size / 2.0f), Normalized(-cell_size / 2.0f)};
-    std::size_t offset = sizeof(float) * 2 * (i_ind * G_Resolution_Side + j_ind);
+    std::size_t offset = sizeof(float) * 2 * (cell->grid_row * G_Resolution_Side + cell->grid_column);
 
     UpdateBlockedCellsVbo(position, sizeof(position), offset);
 }
