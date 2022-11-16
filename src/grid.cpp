@@ -21,8 +21,8 @@ Grid::Grid()
         {
             cells[i][j].center = {half_cell_size + i * cell_size,
                                   half_cell_size + j * cell_size};
-            cells[i][j].grid_row = i;
-            cells[i][j].grid_column = j;
+            cells[i][j].grid_column = i;
+            cells[i][j].grid_row = j;
         }
     }
 }
@@ -168,6 +168,16 @@ void Grid::InitializeBlockedCells()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+const Cell* Grid::Start() const
+{
+    return start;
+}
+
+const Cell* Grid::Destination() const
+{
+    return destination;
+}
+
 void Grid::UpdateMainCellDataStorage(const Cell *cell, float *data_storage)
 {
     float half_cell_size = cell_size / 2.0f;
@@ -222,6 +232,26 @@ void Grid::RemoveAllBlockedCells()
     std::fill_n(offsets, 2 * G_Resolution_Side * G_Resolution_Side, Normalized(-cell_size / 2.0f));
 
     UpdateBlockedCellsVbo(offsets, sizeof(offsets), 0);
+}
+
+std::vector<Cell> Grid::FreeNeighbourCells(const Cell &cell) const
+{
+    std::vector<Cell> neighbours;
+    for (int i = cell.grid_column - 1; i <= cell.grid_column + 1; i++)
+    {
+        for (int j = cell.grid_row - 1; j <= cell.grid_row + 1; j++)
+        {
+            if (i < 0 || i >= G_Resolution_Side || 
+                j < 0 || j >= G_Resolution_Side || 
+                i == cell.grid_column && j == cell.grid_row || 
+                !cells[i][j].is_free)
+                continue;
+
+            neighbours.push_back(cells[i][j]);
+        }
+    }
+
+    return neighbours;
 }
 
 Cell* Grid::FindCellAround(double position_x, double position_y)

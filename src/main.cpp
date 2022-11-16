@@ -9,6 +9,7 @@
 #include "searcher.h"
 
 Grid grid;
+Searcher searcher(&grid);
 
 bool is_placing_main_cells = true;
 
@@ -32,6 +33,9 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
         grid.ClearAll();
+
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
+        searcher.FindPath();
 }
 
 void CursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos)

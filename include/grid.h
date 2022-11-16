@@ -12,9 +12,26 @@ struct Cell
         float y;
     } center;
 
+    int grid_column;
     int grid_row;
-    int grid_column;    
     bool is_free = true;
+
+    bool operator==(const Cell &cell) const
+    {
+        return grid_column == cell.grid_column && grid_row == cell.grid_row;
+    }
+
+    bool operator<(const Cell &cell) const
+    {
+        return grid_row == cell.grid_row ? grid_column < cell.grid_column : 
+                                           grid_row < cell.grid_row;
+    }
+
+    bool operator>(const Cell &cell) const
+    {
+        return grid_row == cell.grid_row ? grid_column > cell.grid_column : 
+                                           grid_row > cell.grid_row;
+    }
 };
 
 class Grid
@@ -57,6 +74,10 @@ public:
     void InitializeMainCells();
     void InitializeBlockedCells();
 
+    const Cell *Start() const;
+    const Cell *Destination() const;
+
+    std::vector<Cell> FreeNeighbourCells(const Cell &cell) const;
     Cell* FindCellAround(double position_x, double position_y);
     
     void SetStartCell(Cell *cell);
