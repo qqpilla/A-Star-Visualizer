@@ -32,7 +32,10 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
         is_placing_main_cells = !is_placing_main_cells;
 
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    {
         grid.ClearAll();
+        searcher.Reset();
+    }
 
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
         searcher.FindPath();
@@ -119,18 +122,22 @@ int main()
     ShaderProgram vertical_grid_shader("../shaders/v_grid.vs", "../shaders/grid.fs");
     ShaderProgram horizontal_grid_shader("../shaders/h_grid.vs", "../shaders/grid.fs");
     ShaderProgram main_cells_shader("../shaders/main_cells.vs", "../shaders/cells.fs");
-    ShaderProgram blocked_cells_shader("../shaders/blocked_cells.vs", "../shaders/cells.fs");
+    ShaderProgram cells_shader("../shaders/cells.vs", "../shaders/cells.fs");
 
     grid.InitializeGrid();
     grid.InitializeMainCells();
     grid.InitializeBlockedCells();
+    
+    searcher.InitializePath();
+
 
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(blocked_cells_shader.ID());
+        glUseProgram(cells_shader.ID());
+        searcher.DrawPath();
         grid.DrawBlockedCells();
 
         glUseProgram(main_cells_shader.ID());

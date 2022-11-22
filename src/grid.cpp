@@ -4,11 +4,6 @@
 
 #include "glad/glad.h"
 
-float Normalized(float value)
-{
-    return (value / float(W_Side)) * 2.0f - 1.0f;
-}
-
 Grid::Grid()
 {    
     // set up cells
@@ -116,21 +111,13 @@ void Grid::InitializeMainCells()
 
 void Grid::InitializeBlockedCells()
 {
-    // square with center point (0, 0)
-    float half_cell = cell_size / 2.0f;
-    float center = float(W_Side) / 2.0f;
-    float coords[] =
-    {
-        Normalized(center - half_cell), Normalized(center - half_cell),
-        Normalized(center - half_cell), Normalized(center + half_cell),
-        Normalized(center + half_cell), Normalized(center + half_cell),
-        Normalized(center + half_cell), Normalized(center - half_cell)
-    };
+    std::size_t coords_s;
+    float *coords = NormalizedDefaultCellCoords(coords_s);
 
     // by dafault no blocked cells should be drawn
     // so offset pushes the quads outside the window
     float offsets[2 * G_Resolution_Side * G_Resolution_Side];
-    std::fill_n(offsets, 2 * G_Resolution_Side * G_Resolution_Side, Normalized(-half_cell));   
+    std::fill_n(offsets, 2 * G_Resolution_Side * G_Resolution_Side, Normalized(-cell_size / 2.0f));   
 
 
     unsigned int indices[] =
@@ -146,17 +133,19 @@ void Grid::InitializeBlockedCells()
 
     glGenBuffers(1, &blocked_cells_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, blocked_cells_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(coords) + sizeof(blocked_cells_color) + sizeof(offsets), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(coords), coords);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(coords), sizeof(blocked_cells_color), blocked_cells_color);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(coords) + sizeof(blocked_cells_color), sizeof(offsets), offsets);
+    glBufferData(GL_ARRAY_BUFFER, coords_s + sizeof(blocked_cells_color) + sizeof(offsets), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, coords_s, coords);
+    glBufferSubData(GL_ARRAY_BUFFER, coords_s, sizeof(blocked_cells_color), blocked_cells_color);
+    glBufferSubData(GL_ARRAY_BUFFER, coords_s + sizeof(blocked_cells_color), sizeof(offsets), offsets);
+
+    delete[] coords;
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(coords)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)(sizeof(coords) + sizeof(blocked_cells_color)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)coords_s);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)(coords_s + sizeof(blocked_cells_color)));
     glVertexAttribDivisor(1, G_Resolution_Side * G_Resolution_Side);
     glVertexAttribDivisor(2, 1);
 
@@ -275,6 +264,24 @@ Cell* Grid::FindCellAround(double position_x, double position_y)
     }
 
     return &(*it);
+}
+
+float* Grid::NormalizedDefaultCellCoords(std::size_t &size) const
+{
+    // square with center point (0, 0)
+    float half_cell = cell_size / 2.0f;
+    float center = float(W_Side) / 2.0f;
+
+    float *coords = new float[8]
+    {
+        Normalized(center - half_cell), Normalized(center - half_cell),
+        Normalized(center - half_cell), Normalized(center + half_cell),
+        Normalized(center + half_cell), Normalized(center + half_cell),
+        Normalized(center + half_cell), Normalized(center - half_cell)
+    };
+
+    size = 8 * sizeof(float);
+    return coords;
 }
 
 void Grid::SetStartCell(Cell *cell)

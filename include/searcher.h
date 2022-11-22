@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <queue>
 #include "grid.h"
+#include "cell.h"
 
 class Searcher
 {
@@ -34,8 +35,11 @@ private:
     };
 
     std::vector<Cell> path;
+    std::size_t path_size = 0;
+
     const Cell *start;
     const Cell *destination;
+    const Grid *grid;
 
     std::unordered_map<Cell, Cell, cell_hash> came_from;
     std::unordered_map<Cell, int, cell_hash> cost;
@@ -43,13 +47,20 @@ private:
     CostQueue opened;
     std::vector<Cell> closed;
 
-    const Grid *grid;
+    unsigned int path_vao;
+    float path_color[3] = {0.66f, 0.2f, 0.89f};
 
-    void Reset();
-    int Distance(const Cell &a, const Cell &b) const;
+    void SetPathOffsetsVbo(float *data, std::size_t data_size);
+
     void SearchStep(const Cell &current);
+    int Distance(const Cell &a, const Cell &b) const;
 
 public:
     Searcher(const Grid *searched_grid);
+    void InitializePath();
+
+    void Reset();
     void FindPath();
+
+    void DrawPath() const;
 };
