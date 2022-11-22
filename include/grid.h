@@ -3,36 +3,7 @@
 #include <vector>
 #include <cstddef>
 #include "constants.h"
-
-struct Cell
-{
-    struct Point
-    {
-        float x;
-        float y;
-    } center;
-
-    int grid_column;
-    int grid_row;
-    bool is_free = true;
-
-    bool operator==(const Cell &cell) const
-    {
-        return grid_column == cell.grid_column && grid_row == cell.grid_row;
-    }
-
-    bool operator<(const Cell &cell) const
-    {
-        return grid_row == cell.grid_row ? grid_column < cell.grid_column : 
-                                           grid_row < cell.grid_row;
-    }
-
-    bool operator>(const Cell &cell) const
-    {
-        return grid_row == cell.grid_row ? grid_column > cell.grid_column : 
-                                           grid_row > cell.grid_row;
-    }
-};
+#include "cell.h"
 
 class Grid
 {
@@ -79,6 +50,7 @@ public:
 
     std::vector<Cell> FreeNeighbourCells(const Cell &cell) const;
     Cell* FindCellAround(double position_x, double position_y);
+    float* NormalizedDefaultCellCoords(std::size_t &size) const;
     
     void SetStartCell(Cell *cell);
     void SetDestinationCell(Cell *cell);
