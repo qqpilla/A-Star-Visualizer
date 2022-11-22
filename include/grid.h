@@ -48,7 +48,7 @@ public:
     const Cell *Start() const;
     const Cell *Destination() const;
 
-    std::vector<Cell> FreeNeighbourCells(const Cell &cell) const;
+    std::vector<Cell> ReachableFreeNeighbourCells(const Cell &cell) const;
     Cell* FindCellAround(double position_x, double position_y);
     float* NormalizedDefaultCellCoords(std::size_t &size) const;
     

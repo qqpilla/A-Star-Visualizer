@@ -82,28 +82,29 @@ void Searcher::SetPathOffsetsVbo(float *data, std::size_t data_size)
 
 int Searcher::Distance(const Cell &a, const Cell &b) const
 {
-    return pow(a.grid_column - b.grid_column, 2) + pow(a.grid_row - b.grid_row, 2);
+    return abs(a.grid_column - b.grid_column) + abs(a.grid_row - b.grid_row);
 }
 
 void Searcher::SearchStep(const Cell &current)
 {
     closed.push_back(current);
-    std::vector<Cell> neighbours = grid->FreeNeighbourCells(current);
+    std::vector<Cell> neighbours = grid->ReachableFreeNeighbourCells(current);
 
     for (auto cur_nei : neighbours)
     {
         if (std::find(closed.begin(), closed.end(), cur_nei) != closed.end())
             continue;
 
-        int d_cost = Distance(*destination, cur_nei);
-        int new_cost = Distance(*start, cur_nei) + d_cost;
+        int g_cost = Distance(current, cur_nei) + came_from[current].second;
+        int h_cost = Distance(*destination, cur_nei);
+        int f_cost = g_cost + h_cost;
 
         if (cost.find(cur_nei) == cost.end() || 
-            new_cost < cost[cur_nei])
+            f_cost < cost[cur_nei])
         {
-            cost[cur_nei] = new_cost;
-            came_from[cur_nei] = current;
-            opened.put(cur_nei, new_cost, d_cost);
+            cost[cur_nei] = f_cost;
+            came_from[cur_nei] = {current, g_cost};
+            opened.put(cur_nei, f_cost, h_cost);
         }
     }
 }
@@ -141,6 +142,8 @@ void Searcher::FindPath()
 
     // finding shortest path
     opened.put(*start, 0, 0);
+    came_from[*start] = {*start, 0};
+
     while(!opened.empty())
     {
         Cell current = opened.get();
@@ -157,11 +160,11 @@ void Searcher::FindPath()
         return;
     }
 
-    Cell step = came_from[*destination];
-    while (came_from.find(step) != came_from.end())
+    Cell step = came_from[*destination].first;
+    while (came_from[step].second != 0)
     {
         path.push_back(step);
-        step = came_from[step];
+        step = came_from[step].first;
     }
 
     // path is in reversed order right now (destination -> start)

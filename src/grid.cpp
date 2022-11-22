@@ -223,7 +223,7 @@ void Grid::RemoveAllBlockedCells()
     UpdateBlockedCellsVbo(offsets, sizeof(offsets), 0);
 }
 
-std::vector<Cell> Grid::FreeNeighbourCells(const Cell &cell) const
+std::vector<Cell> Grid::ReachableFreeNeighbourCells(const Cell &cell) const
 {
     std::vector<Cell> neighbours;
     for (int i = cell.grid_column - 1; i <= cell.grid_column + 1; i++)
@@ -232,8 +232,12 @@ std::vector<Cell> Grid::FreeNeighbourCells(const Cell &cell) const
         {
             if (i < 0 || i >= G_Resolution_Side || 
                 j < 0 || j >= G_Resolution_Side || 
-                i == cell.grid_column && j == cell.grid_row || 
-                !cells[i][j].is_free)
+                (i == cell.grid_column && j == cell.grid_row) || 
+                !cells[i][j].is_free ||
+                // can't move diagonally if desired cell is blocked by 2 neighbours
+                (i != cell.grid_column && j != cell.grid_row &&
+                !cells[i][cell.grid_row].is_free && !cells[cell.grid_column][j].is_free)
+            )
                 continue;
 
             neighbours.push_back(cells[i][j]);
@@ -251,13 +255,13 @@ Cell* Grid::FindCellAround(double position_x, double position_y)
     for (int i = 0; i < G_Resolution_Side; i++)
     {
         it = std::find_if(cells[i].begin(), cells[i].end(),
-                        [position_x, position_y, half_cell_size](const Cell &c) -> bool
-                        {
-                            return position_x >= c.center.x - half_cell_size &&
-                                   position_x <= c.center.x + half_cell_size &&
-                                   position_y >= c.center.y - half_cell_size &&
-                                   position_y <= c.center.y + half_cell_size;
-                        });
+            [position_x, position_y, half_cell_size](const Cell &c)
+            {
+                return position_x >= c.center.x - half_cell_size &&
+                       position_x <= c.center.x + half_cell_size &&
+                       position_y >= c.center.y - half_cell_size &&
+                       position_y <= c.center.y + half_cell_size;
+            });
         
         if (it != cells[i].end())
             break;

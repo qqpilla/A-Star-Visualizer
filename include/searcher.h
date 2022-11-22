@@ -41,7 +41,7 @@ private:
     const Cell *destination;
     const Grid *grid;
 
-    std::unordered_map<Cell, Cell, cell_hash> came_from;
+    std::unordered_map<Cell, std::pair<Cell, int>, cell_hash> came_from;
     std::unordered_map<Cell, int, cell_hash> cost;
 
     CostQueue opened;
