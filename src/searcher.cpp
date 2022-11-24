@@ -85,32 +85,10 @@ int Searcher::Distance(const Cell &a, const Cell &b) const
     return abs(a.grid_column - b.grid_column) + abs(a.grid_row - b.grid_row);
 }
 
-void Searcher::SearchStep(const Cell &current)
-{
-    closed.push_back(current);
-    std::vector<Cell> neighbours = grid->ReachableFreeNeighbourCells(current);
-
-    for (auto cur_nei : neighbours)
-    {
-        if (std::find(closed.begin(), closed.end(), cur_nei) != closed.end())
-            continue;
-
-        int g_cost = Distance(current, cur_nei) + came_from[current].second;
-        int h_cost = Distance(*destination, cur_nei);
-        int f_cost = g_cost + h_cost;
-
-        if (cost.find(cur_nei) == cost.end() || 
-            f_cost < cost[cur_nei])
-        {
-            cost[cur_nei] = f_cost;
-            came_from[cur_nei] = {current, g_cost};
-            opened.put(cur_nei, f_cost, h_cost);
-        }
-    }
-}
-
 void Searcher::Reset()
 {
+    is_searching = false;
+
     path.resize(0);
     path_size = 0;
 
@@ -128,7 +106,7 @@ void Searcher::Reset()
     glBindVertexArray(0);
 }
 
-void Searcher::FindPath()
+void Searcher::StartSearch()
 {
     Reset();
 
@@ -140,26 +118,67 @@ void Searcher::FindPath()
         return;
     }
 
-    // finding shortest path
     opened.put(*start, 0, 0);
     came_from[*start] = {*start, 0};
+    is_searching = true;
+}
 
-    while(!opened.empty())
+void Searcher::SearchStep()
+{
+    if (!is_searching)
+        return;
+
+    bool destination_met = false;
+    if (!opened.empty())
     {
         Cell current = opened.get();
-        if (current == *destination)
-            break;
 
-        SearchStep(current);
+        if (current == *destination)
+        {
+            destination_met = true;
+        }
+        else
+        {
+            closed.push_back(current);
+            std::vector<Cell> neighbours = grid->ReachableFreeNeighbourCells(current);
+
+            for (auto cur_nei : neighbours)
+            {
+                if (std::find(closed.begin(), closed.end(), cur_nei) != closed.end())
+                    continue;
+
+                int g_cost = Distance(current, cur_nei) + came_from[current].second;
+                int h_cost = Distance(*destination, cur_nei);
+                int f_cost = g_cost + h_cost;
+
+                if (cost.find(cur_nei) == cost.end() || 
+                    f_cost < cost[cur_nei])
+                {
+                    cost[cur_nei] = f_cost;
+                    came_from[cur_nei] = {current, g_cost};
+                    opened.put(cur_nei, f_cost, h_cost);
+                }
+            }
+
+            // update closed_vbo (start cell should not be in closed_vbo)
+            // update opened_vbo
+        }
     }
 
-    // building path
-    if (came_from.find(*destination) == came_from.end())
+    if (destination_met)
+    {
+        BuildPath();
+        is_searching = false;
+    }
+    else if (opened.empty())
     {
         std::cout << "NO PATH FOUND" << std::endl;
-        return;
+        is_searching = false;
     }
+}
 
+void Searcher::BuildPath()
+{
     Cell step = came_from[*destination].first;
     while (came_from[step].second != 0)
     {

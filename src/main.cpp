@@ -38,7 +38,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     }
 
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
-        searcher.FindPath();
+        searcher.StartSearch();
 }
 
 void CursorPositionCallback(GLFWwindow *window, double x_pos, double y_pos)
@@ -132,16 +132,26 @@ int main()
 
 
     const int max_fps = 25;
-    const double fps_limit = 1.0 / max_fps;
+    const double draw_speed_limit = 1.0 / max_fps;
+    const double search_speed_limit = 1.0 / 50.0;
 
     double last_draw_time = 0;
+    double last_search_time = 0;
     double now_time;
 
     while (!glfwWindowShouldClose(window))
     {
         now_time = glfwGetTime();
 
-        if (now_time - last_draw_time >= fps_limit)
+        if (now_time - last_search_time >= search_speed_limit)
+        {
+            searcher.SearchStep();
+            // draw opened cells and closed cells here while searching
+            // start drawing them below when done (do they even need to be drawn after the searcher finishes its work?)
+            last_search_time = now_time;
+        }
+
+        if (now_time - last_draw_time >= draw_speed_limit)
         {
             glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);

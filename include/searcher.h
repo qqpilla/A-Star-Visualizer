@@ -34,6 +34,8 @@ private:
         Cell get();
     };
 
+    bool is_searching = false;
+
     std::vector<Cell> path;
     std::size_t path_size = 0;
 
@@ -52,15 +54,16 @@ private:
 
     void SetPathOffsetsVbo(float *data, std::size_t data_size);
 
-    void SearchStep(const Cell &current);
     int Distance(const Cell &a, const Cell &b) const;
+    void BuildPath();
 
 public:
     Searcher(const Grid *searched_grid);
     void InitializePath();
 
     void Reset();
-    void FindPath();
+    void StartSearch();
+    void SearchStep();
 
     void DrawPath() const;
 };
