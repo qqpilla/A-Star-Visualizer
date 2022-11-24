@@ -131,25 +131,39 @@ int main()
     searcher.InitializePath();
 
 
+    const int max_fps = 25;
+    const double fps_limit = 1.0 / max_fps;
+
+    double last_draw_time = 0;
+    double now_time;
+
     while (!glfwWindowShouldClose(window))
     {
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        now_time = glfwGetTime();
 
-        glUseProgram(cells_shader.ID());
-        searcher.DrawPath();
-        grid.DrawBlockedCells();
+        if (now_time - last_draw_time >= fps_limit)
+        {
+            glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(main_cells_shader.ID());
-        grid.DrawStart();
-        grid.DrawDestination();
+            glUseProgram(cells_shader.ID());
+            searcher.DrawPath();
+            grid.DrawBlockedCells();
 
-        glUseProgram(vertical_grid_shader.ID());
-        grid.DrawSetOfGridLines();
-        glUseProgram(horizontal_grid_shader.ID());
-        grid.DrawSetOfGridLines();
+            glUseProgram(main_cells_shader.ID());
+            grid.DrawStart();
+            grid.DrawDestination();
 
-        glfwSwapBuffers(window);
+            glUseProgram(vertical_grid_shader.ID());
+            grid.DrawSetOfGridLines();
+            glUseProgram(horizontal_grid_shader.ID());
+            grid.DrawSetOfGridLines();
+        
+            glfwSwapBuffers(window);
+            
+            last_draw_time = now_time;
+        }
+
         glfwPollEvents();
     }
 
