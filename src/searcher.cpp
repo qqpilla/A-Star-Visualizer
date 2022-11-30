@@ -176,7 +176,7 @@ void Searcher::StartSearch()
         return;
     }
 
-    opened.put(*start, 0, 0);
+    opened.put_unique(*start, 0, 0);
     came_from[*start] = {*start, 0};
     is_searching = true;
 }
@@ -200,6 +200,7 @@ void Searcher::SearchStep()
             closed.push_back(current);
             std::vector<Cell> neighbours = grid->ReachableFreeNeighbourCells(current);
 
+            bool added_neighbour = false;
             for (auto cur_nei : neighbours)
             {
                 if (std::find(closed.begin(), closed.end(), cur_nei) != closed.end())
@@ -214,9 +215,13 @@ void Searcher::SearchStep()
                 {
                     cost[cur_nei] = f_cost;
                     came_from[cur_nei] = {current, g_cost};
-                    opened.put(cur_nei, f_cost, h_cost);
+                    opened.put_unique(cur_nei, f_cost, h_cost);
+
+                    added_neighbour = true;
                 }
             }
+            if (added_neighbour)
+                opened.sort();
 
             if (current != *start)
             {

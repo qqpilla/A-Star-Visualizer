@@ -3,7 +3,6 @@
 #include <vector>
 #include <cstddef>
 #include <unordered_map>
-#include <queue>
 #include "grid.h"
 #include "cell.h"
 
@@ -25,13 +24,14 @@ private:
     {
     private:
         typedef std::tuple<int, int, Cell> CQElement;
-        std::priority_queue<CQElement, std::vector<CQElement>, std::greater<CQElement>> elements;
+        std::vector<CQElement> elements;
 
     public:
+        Cell get();
         const bool empty() const;
         void clear();
-        void put(Cell item, int all_cost, int d_cost);
-        Cell get();
+        void put_unique(const Cell &item, int all_cost, int d_cost);
+        void sort();
     };
 
     bool is_searching = false;

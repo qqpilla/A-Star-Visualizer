@@ -129,7 +129,7 @@ int main()
     grid.InitializeBlockedCells();
     searcher.InitializeAll();
 
-    const int max_fps = 25;
+    const int max_fps = 30;
     const double draw_speed_limit = 1.0 / max_fps;
     // const double search_speed_limit = 1.0 / 50.0;
 

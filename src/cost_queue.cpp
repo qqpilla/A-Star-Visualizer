@@ -1,4 +1,12 @@
 #include "searcher.h"
+#include <algorithm>
+
+Cell Searcher::CostQueue::get()
+{
+    Cell el = std::get<Cell>(elements.back());
+    elements.pop_back();
+    return el;
+}
 
 const bool Searcher::CostQueue::empty() const
 {
@@ -7,17 +15,25 @@ const bool Searcher::CostQueue::empty() const
 
 void Searcher::CostQueue::clear()
 {
-    elements = std::priority_queue<CQElement, std::vector<CQElement>, std::greater<CQElement>>();
+    elements.clear();
 }
 
-void Searcher::CostQueue::put(Cell item, int all_cost, int d_cost)
+void Searcher::CostQueue::put_unique(const Cell &item, int all_cost, int d_cost)
 {
-    elements.emplace(all_cost, d_cost, item);
+    auto it = std::find_if(elements.begin(), elements.end(), [&item](const CQElement &el) {return std::get<Cell>(el) == item;});
+    
+    if (it == elements.end())
+    {
+        elements.push_back({all_cost, d_cost, item});
+    }
+    else
+    {
+        std::get<0>(*it) = all_cost;
+        std::get<1>(*it) = d_cost;
+    }
 }
 
-Cell Searcher::CostQueue::get()
+void Searcher::CostQueue::sort()
 {
-    Cell el = std::get<Cell>(elements.top());
-    elements.pop();
-    return el;
+    std::sort(elements.begin(), elements.end(), std::greater<CQElement>());
 }
