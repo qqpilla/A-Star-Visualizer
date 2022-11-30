@@ -127,36 +127,29 @@ int main()
     grid.InitializeGrid();
     grid.InitializeMainCells();
     grid.InitializeBlockedCells();
-    
-    searcher.InitializePath();
-
+    searcher.InitializeAll();
 
     const int max_fps = 25;
     const double draw_speed_limit = 1.0 / max_fps;
-    const double search_speed_limit = 1.0 / 50.0;
+    // const double search_speed_limit = 1.0 / 50.0;
 
     double last_draw_time = 0;
-    double last_search_time = 0;
+    // double last_search_time = 0;
     double now_time;
 
     while (!glfwWindowShouldClose(window))
     {
         now_time = glfwGetTime();
 
-        if (now_time - last_search_time >= search_speed_limit)
-        {
-            searcher.SearchStep();
-            // draw opened cells and closed cells here while searching
-            // start drawing them below when done (do they even need to be drawn after the searcher finishes its work?)
-            last_search_time = now_time;
-        }
-
         if (now_time - last_draw_time >= draw_speed_limit)
         {
+            searcher.SearchStep();
+
             glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             glUseProgram(cells_shader.ID());
+            searcher.DrawClosedCells();
             searcher.DrawPath();
             grid.DrawBlockedCells();
 
@@ -173,6 +166,15 @@ int main()
             
             last_draw_time = now_time;
         }
+
+        // if (now_time - last_search_time >= search_speed_limit)
+        // {
+
+        //     // glUseProgram(cells_shader.ID());
+        //     // draw opened cells and closed cells here while searching
+        //     // start drawing them above when done (do they even need to be drawn after the searcher finishes its work?)
+        //     last_search_time = now_time;
+        // }
 
         glfwPollEvents();
     }

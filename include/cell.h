@@ -16,6 +16,11 @@ struct Cell
     {
         return grid_column == cell.grid_column && grid_row == cell.grid_row;
     }
+    
+    bool operator!=(const Cell &cell) const
+    {
+        return grid_column != cell.grid_column || grid_row != cell.grid_row;
+    }
 
     bool operator<(const Cell &cell) const
     {

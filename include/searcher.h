@@ -50,20 +50,35 @@ private:
     std::vector<Cell> closed;
 
     unsigned int path_vao;
-    float path_color[3] = {0.66f, 0.2f, 0.89f};
+    unsigned int opened_vao;
+    unsigned int closed_vao;
 
+    unsigned int *opened_vbo;
+    unsigned int *closed_vbo;
+    std::size_t opened_vbo_size = 0;
+    std::size_t closed_vbo_size = 0;
+    std::size_t opened_cells_count = 0;
+    std::size_t closed_cells_count = 0;
+
+    float path_color[3] = {0.66f, 0.2f, 0.89f};
+    float opened_color[3] = {0.94f, 0.93f, 0.4f};
+    float closed_color[3] = {0.95f, 0.62f, 0.21f};
+
+    void InitializeCellsVao(unsigned int& VAO, float *cells_color, std::size_t color_size);
     void SetPathOffsetsVbo(float *data, std::size_t data_size);
+    void AppendToOffsetsVbo(unsigned int &VAO, unsigned int **VBO, std::size_t &vbo_size, float *data, std::size_t data_size);
 
     int Distance(const Cell &a, const Cell &b) const;
     void BuildPath();
 
 public:
     Searcher(const Grid *searched_grid);
-    void InitializePath();
+    void InitializeAll();
 
     void Reset();
     void StartSearch();
     void SearchStep();
 
     void DrawPath() const;
+    void DrawClosedCells() const;
 };
