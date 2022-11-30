@@ -36,6 +36,11 @@ Searcher::Searcher(const Grid *searched_grid)
     grid = searched_grid;
 }
 
+bool Searcher::IsSearching() const
+{
+    return is_searching;
+}
+
 void Searcher::InitializeCellsVao(unsigned int& VAO, float *cells_color, std::size_t color_size)
 {
     std::size_t coords_s;
@@ -154,6 +159,7 @@ void Searcher::Reset()
         glDeleteBuffers(1, opened_vbo);
         delete opened_vbo;
         opened_vbo_size = 0;
+        opened_cells_count = 0;
     }
     if (closed_vbo_size > 0)
     {
@@ -198,39 +204,51 @@ void Searcher::SearchStep()
         else
         {
             closed.push_back(current);
-            std::vector<Cell> neighbours = grid->ReachableFreeNeighbourCells(current);
+           
+            std::vector<Cell> all_neighbours = grid->ReachableFreeNeighbourCells(current);
+            std::vector<Cell> added_neighbours;
+            bool sort_needed = false;
 
-            bool added_neighbour = false;
-            for (auto cur_nei : neighbours)
+            for (auto cur_nei : all_neighbours)
             {
                 if (std::find(closed.begin(), closed.end(), cur_nei) != closed.end())
                     continue;
-
+                
                 int g_cost = Distance(current, cur_nei) + came_from[current].second;
                 int h_cost = Distance(*destination, cur_nei);
                 int f_cost = g_cost + h_cost;
 
-                if (cost.find(cur_nei) == cost.end() || 
-                    f_cost < cost[cur_nei])
+                bool is_opened = cost.find(cur_nei) != cost.end();
+                if (!is_opened || f_cost < cost[cur_nei])
                 {
                     cost[cur_nei] = f_cost;
                     came_from[cur_nei] = {current, g_cost};
                     opened.put_unique(cur_nei, f_cost, h_cost);
 
-                    added_neighbour = true;
+                    if (!is_opened)
+                        added_neighbours.push_back(cur_nei);
+
+                    sort_needed = true;
                 }
             }
-            if (added_neighbour)
+            if (sort_needed)
                 opened.sort();
 
-            if (current != *start)
+            if (added_neighbours.size() > 0)
             {
-                std::size_t closed_data_s;
-                float *closed_data = ExtractCoords(current, closed_data_s);
-                AppendToOffsetsVbo(closed_vao, &closed_vbo, closed_vbo_size, closed_data, closed_data_s);
-                closed_cells_count++;
+                std::size_t opened_data_s;
+                float *opened_data = ExtractCoords(added_neighbours, opened_data_s);
+                AppendToOffsetsVbo(opened_vao, &opened_vbo, opened_vbo_size, opened_data, opened_data_s);
+                opened_cells_count += added_neighbours.size();
+
+                delete[] opened_data;
             }
-            // update opened_vbo
+
+            std::size_t closed_data_s;
+            float *closed_data = ExtractCoords(current, closed_data_s);
+            AppendToOffsetsVbo(closed_vao, &closed_vbo, closed_vbo_size, closed_data, closed_data_s);
+            closed_cells_count++;
+            delete[] closed_data;
         }
     }
 
@@ -280,5 +298,12 @@ void Searcher::DrawClosedCells() const
 {
     glBindVertexArray(closed_vao);
     glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, closed_cells_count);
+    glBindVertexArray(0);
+}
+
+void Searcher::DrawOpenedCells() const
+{
+    glBindVertexArray(opened_vao);
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, opened_cells_count);
     glBindVertexArray(0);
 }

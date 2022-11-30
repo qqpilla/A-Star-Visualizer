@@ -73,6 +73,7 @@ private:
 
 public:
     Searcher(const Grid *searched_grid);
+    bool IsSearching() const;
     void InitializeAll();
 
     void Reset();
@@ -81,4 +82,5 @@ public:
 
     void DrawPath() const;
     void DrawClosedCells() const;
+    void DrawOpenedCells() const;
 };

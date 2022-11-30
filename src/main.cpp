@@ -12,6 +12,7 @@ Grid grid;
 Searcher searcher(&grid);
 
 bool is_placing_main_cells = true;
+bool is_searching = false;
 
 bool left_click = false;
 bool right_click = false;
@@ -129,26 +130,34 @@ int main()
     grid.InitializeBlockedCells();
     searcher.InitializeAll();
 
-    const int max_fps = 30;
-    const double draw_speed_limit = 1.0 / max_fps;
-    // const double search_speed_limit = 1.0 / 50.0;
+    const int max_fps_on_still = 25;
+    const int max_fps_on_search = 60;
+    const double on_still_speed_limit = 1.0 / max_fps_on_still;
+    const double on_search_speed_limit = 1.0 / max_fps_on_search;
+    double current_limit = on_still_speed_limit;
 
     double last_draw_time = 0;
-    // double last_search_time = 0;
     double now_time;
 
     while (!glfwWindowShouldClose(window))
     {
         now_time = glfwGetTime();
 
-        if (now_time - last_draw_time >= draw_speed_limit)
+        if (now_time - last_draw_time >= current_limit)
         {
+            if (is_searching != searcher.IsSearching())
+            {
+                is_searching = searcher.IsSearching();
+                current_limit = (int)is_searching * on_search_speed_limit +
+                                (int)(!is_searching) * on_still_speed_limit;
+            }
             searcher.SearchStep();
 
             glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             glUseProgram(cells_shader.ID());
+            searcher.DrawOpenedCells();
             searcher.DrawClosedCells();
             searcher.DrawPath();
             grid.DrawBlockedCells();
@@ -166,15 +175,6 @@ int main()
             
             last_draw_time = now_time;
         }
-
-        // if (now_time - last_search_time >= search_speed_limit)
-        // {
-
-        //     // glUseProgram(cells_shader.ID());
-        //     // draw opened cells and closed cells here while searching
-        //     // start drawing them above when done (do they even need to be drawn after the searcher finishes its work?)
-        //     last_search_time = now_time;
-        // }
 
         glfwPollEvents();
     }
