@@ -31,6 +31,24 @@ float *ExtractCoords(const Cell &cell, std::size_t &size)
     return coords;
 }
 
+float *CellsGradient(int cells_count, std::size_t &size, const float colorA[3], const float colorB[3])
+{
+    float *colors = new float[cells_count * 3]; 
+
+    float delta;
+    for (int i = 0; i <= cells_count - 1; i++)
+    {
+        delta = (i + 1) / (float)(cells_count + 1);
+
+        colors[i * 3] = (1 - delta) * colorA[0] + delta * colorB[0];
+        colors[i * 3 + 1] = (1 - delta) * colorA[1] + delta * colorB[1];
+        colors[i * 3 + 2] = (1 - delta) * colorA[2] + delta * colorB[2];
+    }
+
+    size = cells_count * 3 * sizeof(float);
+    return colors;
+}
+
 Searcher::Searcher(const Grid *searched_grid)
 {
     grid = searched_grid;
@@ -82,14 +100,51 @@ void Searcher::InitializeCellsVao(unsigned int& VAO, float *cells_color, std::si
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Searcher::InitializeAll()
+void Searcher::InitializePathCells()
 {
-    InitializeCellsVao(path_vao, path_color, sizeof(path_color));
+    std::size_t coords_s;
+    float *coords = grid->NormalizedDefaultCellCoords(coords_s);
+
+    unsigned int indices[] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+
+    glGenVertexArrays(1, &path_vao);
+    glBindVertexArray(path_vao);
+
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, coords_s, coords, GL_STATIC_DRAW);
+
+    delete[] coords;
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
+    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void Searcher::InitializeSearchCells()
+{
     InitializeCellsVao(opened_vao, opened_color, sizeof(opened_color));
     InitializeCellsVao(closed_vao, closed_color, sizeof(closed_color));
 }
 
-void Searcher::SetPathOffsetsVbo(float *data, std::size_t data_size)
+void Searcher::SetPathVbo(float *data, std::size_t data_size, unsigned int attrib_index, unsigned int components_count)
 {
     glBindVertexArray(path_vao);
 
@@ -97,7 +152,7 @@ void Searcher::SetPathOffsetsVbo(float *data, std::size_t data_size)
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, data_size, data, GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0); 
+    glVertexAttribPointer(attrib_index, components_count, GL_FLOAT, GL_FALSE, sizeof(float) * components_count, (void*)0); 
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -143,7 +198,7 @@ void Searcher::Reset()
     is_searching = false;
 
     path.resize(0);
-    path_size = 0;
+    path_cells_count = 0;
 
     start = nullptr;
     destination = nullptr;
@@ -272,25 +327,30 @@ void Searcher::BuildPath()
         path.push_back(step);
         step = came_from[step].first;
     }
+    path_cells_count = path.size();
 
     // path is in reversed order right now (destination -> start)
     // so reversing it would be nice
     std::reverse(path.begin(), path.end());
 
-    // passing path coords to new vbo
-    path_size = path.size();
+    // passing path colors to new vbo
+    std::size_t colors_s;
+    float *colors = CellsGradient(path_cells_count, colors_s, grid->StartColor(), grid->DestinationColor());    
+    SetPathVbo(colors, colors_s, 1, 3);
 
+    // passing path coords to new vbo
     std::size_t coords_s;
     float *coords = ExtractCoords(path, coords_s);
-    SetPathOffsetsVbo(coords, coords_s);
+    SetPathVbo(coords, coords_s, 2, 2);
 
+    delete[] colors;
     delete[] coords;
 }
 
 void Searcher::DrawPath() const
 {
     glBindVertexArray(path_vao);
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, path_size);
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, path_cells_count);
     glBindVertexArray(0);
 }
 

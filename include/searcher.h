@@ -37,7 +37,7 @@ private:
     bool is_searching = false;
 
     std::vector<Cell> path;
-    std::size_t path_size = 0;
+    std::size_t path_cells_count = 0;
 
     const Cell *start;
     const Cell *destination;
@@ -60,12 +60,11 @@ private:
     std::size_t opened_cells_count = 0;
     std::size_t closed_cells_count = 0;
 
-    float path_color[3] = {0.66f, 0.2f, 0.89f};
-    float opened_color[3] = {0.94f, 0.93f, 0.4f};
-    float closed_color[3] = {0.95f, 0.62f, 0.21f};
+    float opened_color[3] = {0.96f, 0.631f, 0.631f};
+    float closed_color[3] = {0.709f, 0.411f, 0.65f};
 
     void InitializeCellsVao(unsigned int& VAO, float *cells_color, std::size_t color_size);
-    void SetPathOffsetsVbo(float *data, std::size_t data_size);
+    void SetPathVbo(float *data, std::size_t data_size, unsigned int attrib_index, unsigned int components_count);
     void AppendToOffsetsVbo(unsigned int &VAO, unsigned int **VBO, std::size_t &vbo_size, float *data, std::size_t data_size);
 
     int Distance(const Cell &a, const Cell &b) const;
@@ -74,7 +73,8 @@ private:
 public:
     Searcher(const Grid *searched_grid);
     bool IsSearching() const;
-    void InitializeAll();
+    void InitializePathCells();
+    void InitializeSearchCells();
 
     void Reset();
     void StartSearch();

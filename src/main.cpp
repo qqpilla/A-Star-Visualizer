@@ -38,6 +38,9 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
         searcher.Reset();
     }
 
+    if (key == GLFW_KEY_C && action == GLFW_PRESS)
+        searcher.Reset();
+
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
         searcher.StartSearch();
 }
@@ -67,14 +70,14 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
     {
         Cell *cell = grid.FindCellAround(cursor_x, cursor_y);
 
-        if (is_placing_main_cells)
+        if (is_placing_main_cells && !is_searching)
         {
             if (left_click)
                 grid.SetStartCell(cell);
             else
                 grid.SetDestinationCell(cell);
         }
-        else
+        else if (!is_placing_main_cells)
         {
             if (left_click)
                 grid.PlaceBlockedCell(cell);
@@ -128,7 +131,8 @@ int main()
     grid.InitializeGrid();
     grid.InitializeMainCells();
     grid.InitializeBlockedCells();
-    searcher.InitializeAll();
+    searcher.InitializePathCells();
+    searcher.InitializeSearchCells();
 
     const int max_fps_on_still = 25;
     const int max_fps_on_search = 60;
@@ -153,7 +157,7 @@ int main()
             }
             searcher.SearchStep();
 
-            glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+            glClearColor(0.972f, 0.913f, 0.898f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             glUseProgram(cells_shader.ID());

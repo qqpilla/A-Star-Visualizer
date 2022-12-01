@@ -167,6 +167,16 @@ const Cell* Grid::Destination() const
     return destination;
 }
 
+const float* Grid::StartColor() const
+{
+    return start_color;
+}
+
+const float* Grid::DestinationColor() const
+{
+    return destination_color;
+}
+
 void Grid::UpdateMainCellDataStorage(const Cell *cell, float *data_storage)
 {
     float half_cell_size = cell_size / 2.0f;

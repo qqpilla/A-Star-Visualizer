@@ -23,13 +23,13 @@ private:
 
     float start_data[8]; // x & y for all 4 corners
     float destination_data[8];
-    float start_color[3] = {1.0f, 0.0f, 0.0f};
-    float destination_color[3] = {0.0f, 0.0f, 1.0f};
+    float start_color[3] = {0.0f, 0.835f, 1.0f};
+    float destination_color[3] = {0.0f, 1.0f, 0.333f};
 
     unsigned int blocked_cells_vao;
     unsigned int blocked_cells_vbo;
 
-    float blocked_cells_color[3] = {0.0f, 1.0f, 0.0f};
+    float blocked_cells_color[3] = {0.145f, 0.211f, 0.341f};
 
     void UpdateMainCellDataStorage(const Cell *cell, float *data_storage);
     void UpdateMainCellVbo(unsigned int &VBO, float *data, std::size_t data_size);
@@ -47,6 +47,8 @@ public:
 
     const Cell *Start() const;
     const Cell *Destination() const;
+    const float* StartColor() const;
+    const float* DestinationColor() const;
 
     std::vector<Cell> ReachableFreeNeighbourCells(const Cell &cell) const;
     Cell* FindCellAround(double position_x, double position_y);
