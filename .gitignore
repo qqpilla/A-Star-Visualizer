@@ -24,6 +24,4 @@
 build/
 
 # Vs Code
-.vscode/*
-!.vscode/launch.json
-!.vscode/tasks.json
+.vscode/
