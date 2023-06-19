@@ -7,6 +7,7 @@
 #include "grid.h"
 #include "shader_program.h"
 #include "searcher.h"
+#include "shaders_dir.h"
 
 Grid grid;
 Searcher searcher(&grid);
@@ -123,10 +124,10 @@ int main()
     glfwSetCursorPosCallback(window, CursorPositionCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
 
-    ShaderProgram vertical_grid_shader("../shaders/v_grid.vs", "../shaders/grid.fs");
-    ShaderProgram horizontal_grid_shader("../shaders/h_grid.vs", "../shaders/grid.fs");
-    ShaderProgram main_cells_shader("../shaders/main_cells.vs", "../shaders/cells.fs");
-    ShaderProgram cells_shader("../shaders/cells.vs", "../shaders/cells.fs");
+    ShaderProgram vertical_grid_shader(SHADERS_DIR "/v_grid.vs", SHADERS_DIR "/grid.fs");
+    ShaderProgram horizontal_grid_shader(SHADERS_DIR "/h_grid.vs", SHADERS_DIR "/grid.fs");
+    ShaderProgram main_cells_shader(SHADERS_DIR "/main_cells.vs", SHADERS_DIR "/cells.fs");
+    ShaderProgram cells_shader(SHADERS_DIR "/cells.vs", SHADERS_DIR "/cells.fs");
 
     grid.InitializeGrid();
     grid.InitializeMainCells();

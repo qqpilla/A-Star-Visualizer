@@ -1,0 +1,2 @@
+#pragma once
+#define SHADERS_DIR "@CMAKE_SOURCE_DIR@/shaders"
