@@ -27,7 +27,7 @@ void Grid::InitializeGrid()
     // set of lines - all vertical or all horizontal lines
     // each vertical line has ends coords (offset, -1) & (offset, 1)
     // each horizontal line has ends coords (-1, offset) & (1, offset)
-    int lines_count = G_Resolution_Side - 1;
+    const int lines_count = G_Resolution_Side - 1;
     float offsets[lines_count];
     float ends[2] = {-1.0f, 1.0f};
 
